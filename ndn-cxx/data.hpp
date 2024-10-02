@@ -411,6 +411,45 @@ operator!=(const Data& lhs, const Data& rhs)
   return !(lhs == rhs);
 }
 
+class MetaInfo
+{
+public:
+  // Existing methods...
+
+  // Add a custom field for mobility flag
+  void setMobilityFlag(bool flag) {
+    m_mobilityFlag = flag;
+  }
+
+  bool getMobilityFlag() const {
+    return m_mobilityFlag;
+  }
+
+  // Encode mobility flag in the wire format
+  template<encoding::Tag TAG>
+  size_t wireEncode(EncodingImpl<TAG>& encoder) const
+  {
+    size_t totalLength = 0;
+    // Existing encoding logic...
+    if (m_mobilityFlag) {
+      totalLength += encoder.appendNonNegativeIntegerBlock(tlv::MobilityFlag, 1);
+    }
+    return totalLength;
+  }
+
+  // Decode mobility flag from wire format
+  void wireDecode(const Block& block)
+  {
+    // Existing decoding logic...
+    if (block.type() == tlv::MobilityFlag) {
+      m_mobilityFlag = true;
+    }
+  }
+
+private:
+  bool m_mobilityFlag = false;
+};
+
 } // namespace ndn
 
 #endif // NDN_CXX_DATA_HPP
