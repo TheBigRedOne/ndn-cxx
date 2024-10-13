@@ -414,9 +414,7 @@ operator!=(const Data& lhs, const Data& rhs)
 class MetaInfo
 {
 public:
-  // Existing methods...
-
-  // Add a custom field for mobility flag
+  // MobilityFlag 相关代码
   void setMobilityFlag(bool flag) {
     m_mobilityFlag = flag;
   }
@@ -425,29 +423,55 @@ public:
     return m_mobilityFlag;
   }
 
-  // Encode mobility flag in the wire format
+  // HopLimit 相关代码
+  void setHopLimit(uint8_t hopLimit) {
+    m_hopLimit = hopLimit;
+  }
+
+  uint8_t getHopLimit() const {
+    return m_hopLimit;
+  }
+
+  bool hasHopLimit() const {
+    return m_hopLimit > 0;
+  }
+
+  // Encode mobility flag and HopLimit in the wire format
   template<encoding::Tag TAG>
   size_t wireEncode(EncodingImpl<TAG>& encoder) const
   {
     size_t totalLength = 0;
-    // Existing encoding logic...
+
+    // MobilityFlag 编码逻辑
     if (m_mobilityFlag) {
       totalLength += encoder.appendNonNegativeIntegerBlock(tlv::MobilityFlag, 1);
     }
+
+    // HopLimit 编码逻辑（仅当 HopLimit > 0 时进行编码）
+    if (hasHopLimit()) {
+      totalLength += encoder.appendNonNegativeIntegerBlock(tlv::HopLimit, m_hopLimit);
+    }
+
     return totalLength;
   }
 
-  // Decode mobility flag from wire format
+  // Decode mobility flag and HopLimit from wire format
   void wireDecode(const Block& block)
   {
-    // Existing decoding logic...
+    // 解码 MobilityFlag
     if (block.type() == tlv::MobilityFlag) {
       m_mobilityFlag = true;
+    }
+
+    // 解码 HopLimit
+    if (block.type() == tlv::HopLimit) {
+      m_hopLimit = readNonNegativeInteger(block);
     }
   }
 
 private:
   bool m_mobilityFlag = false;
+  uint8_t m_hopLimit = 0;  // 默认值为 0，表示不限制跳数
 };
 
 } // namespace ndn
