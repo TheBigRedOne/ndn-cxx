@@ -436,6 +436,15 @@ public:
     return m_hopLimit > 0;
   }
 
+  // TimeStamp 相关代码
+  void setTimeStamp(time::milliseconds timeStamp) {
+    m_timeStamp = timeStamp;
+  }
+
+  time::milliseconds getTimeStamp() const {
+    return m_timeStamp;
+  }
+
   // Encode mobility flag and HopLimit in the wire format
   template<encoding::Tag TAG>
   size_t wireEncode(EncodingImpl<TAG>& encoder) const
@@ -452,6 +461,9 @@ public:
       totalLength += encoder.appendNonNegativeIntegerBlock(tlv::HopLimit, m_hopLimit);
     }
 
+    // TimeStamp 编码逻辑
+    totalLength += encoder.appendNonNegativeIntegerBlock(tlv::TimeStamp, m_timeStamp.count());
+
     return totalLength;
   }
 
@@ -467,11 +479,17 @@ public:
     if (block.type() == tlv::HopLimit) {
       m_hopLimit = readNonNegativeInteger(block);
     }
+
+    // 解码 TimeStamp
+    if (block.type() == tlv::TimeStamp) {
+      m_timeStamp = time::milliseconds(readNonNegativeInteger(block));
+    }
   }
 
 private:
   bool m_mobilityFlag = false;
   uint8_t m_hopLimit = 0;  // 默认值为 0，表示不限制跳数
+  time::milliseconds m_timeStamp = time::steady_clock::now();  // 数据包的生成时间
 };
 
 } // namespace ndn
