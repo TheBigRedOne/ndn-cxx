@@ -42,7 +42,14 @@ enum : uint32_t {
    *
    * The value contains trace information, such as recent Points of Attachment.
    */
-  TraceHint = 204
+  TraceHint = 204,
+
+  /**
+   * @brief A TLV block within ApplicationParameters to request Interest flooding.
+   *
+   * This block can contain other TLVs like TraceHint and HopLimit to guide the flood.
+   */
+  InterestFloodRequest = 205
 };
 
 } // namespace optoflood

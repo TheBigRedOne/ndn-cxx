@@ -61,5 +61,26 @@ getNewFaceSeq(const MetaInfo& metaInfo);
 std::optional<std::vector<uint8_t>>
 getTraceHint(const MetaInfo& metaInfo);
 
+/**
+ * @brief Creates a Block containing ApplicationParameters for Interest flooding.
+ *
+ * This function constructs a container TLV (InterestFloodRequest) that can
+ * hold parameters to guide the flooding, such as a trace hint and a hop limit.
+ *
+ * @param traceHint An optional byte vector for the TraceHint.
+ * @param hopLimit An optional hop limit for the flood. If not provided,
+ *                 the forwarder's default will be used.
+ * @return A Block containing the encoded ApplicationParameters.
+ */
+Block
+makeInterestFloodingParameters(const std::optional<std::vector<uint8_t>>& traceHint,
+                               const std::optional<uint8_t>& hopLimit);
+
+/**
+ * @brief Checks if an Interest's ApplicationParameters contain a flood request.
+ */
+bool
+isInterestFloodRequested(const Interest& interest);
+
 } // namespace optoflood
 } // namespace ndn

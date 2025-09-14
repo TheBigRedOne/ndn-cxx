@@ -3,6 +3,7 @@
 #include "encoding/encoder.hpp"
 #include "encoding/buffer-stream.hpp"
 #include "util/non-negative-integer.hpp"
+#include <ndn-cxx/lp/tags.hpp> // For HopLimitTag
 
 #include <vector>
 
@@ -69,6 +70,59 @@ getTraceHint(const MetaInfo& metaInfo)
     return std::nullopt;
   }
   return std::vector<uint8_t>(block.begin(), block.end());
+}
+
+// --- Interest Packet Helpers ---
+
+Block
+makeInterestFloodingParameters(const std::optional<std::vector<uint8_t>>& traceHint,
+                               const std::optional<uint8_t>& hopLimit)
+{
+  Encoder encoder;
+  encoder.prependBlock(tlv::ApplicationParameters);
+  size_t appParamsLength = 0;
+
+  Block floodRequestBlock(tlv::optoflood::InterestFloodRequest);
+  Encoder floodRequestEncoder;
+  size_t floodRequestLength = 0;
+
+  if (traceHint) {
+    floodRequestEncoder.prependBlock(makeTraceHintBlock(*traceHint));
+    floodRequestLength += floodRequestEncoder.size();
+  }
+  if (hopLimit) {
+    Block hopLimitBlock(tlv::lp::HopLimit);
+    hopLimitBlock.push_back(*hopLimit);
+    floodRequestEncoder.prependBlock(hopLimitBlock);
+    floodRequestLength += floodRequestEncoder.size();
+  }
+
+  floodRequestBlock.encodeHeader(floodRequestLength);
+  floodRequestBlock.insert(floodRequestBlock.end(),
+                           floodRequestEncoder.begin(), floodRequestEncoder.end());
+
+  encoder.prependBlock(floodRequestBlock);
+  appParamsLength += encoder.size();
+  
+  encoder.prependHeader(appParamsLength);
+
+  return encoder.getBlock();
+}
+
+bool
+isInterestFloodRequested(const Interest& interest)
+{
+  const auto& appParams = interest.getApplicationParameters();
+  if (appParams.empty()) {
+    return false;
+  }
+  try {
+    appParams.parse();
+    return appParams.has(tlv::optoflood::InterestFloodRequest);
+  }
+  catch (const tlv::Error&) {
+    return false;
+  }
 }
 
 } // namespace optoflood
