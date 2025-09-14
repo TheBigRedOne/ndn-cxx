@@ -105,6 +105,7 @@ enum RouteOrigin : uint16_t {
   ROUTE_ORIGIN_AUTOCONF      = 66,
   ROUTE_ORIGIN_NLSR          = 128,
   ROUTE_ORIGIN_PREFIXANN     = 129,
+  ROUTE_ORIGIN_OPTOFLOOD     = 130,
   ROUTE_ORIGIN_STATIC        = 255,
 };
 
