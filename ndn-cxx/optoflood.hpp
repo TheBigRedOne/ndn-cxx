@@ -10,6 +10,8 @@
 namespace ndn {
 namespace optoflood {
 
+// All functions are implemented in optoflood.cpp
+
 /**
  * @brief Creates a Block containing a zero-length MobilityFlag TLV.
  */
@@ -64,12 +66,8 @@ getTraceHint(const MetaInfo& metaInfo);
 /**
  * @brief Creates a Block containing ApplicationParameters for Interest flooding.
  *
- * This function constructs a container TLV (InterestFloodRequest) that can
- * hold parameters to guide the flooding, such as a trace hint and a hop limit.
- *
  * @param traceHint An optional byte vector for the TraceHint.
- * @param hopLimit An optional hop limit for the flood. If not provided,
- *                 the forwarder's default will be used.
+ * @param hopLimit An optional hop limit for the flood.
  * @return A Block containing the encoded ApplicationParameters.
  */
 Block

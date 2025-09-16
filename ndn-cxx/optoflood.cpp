@@ -2,12 +2,24 @@
 #include "encoding/tlv-optoflood.hpp"
 #include "encoding/encoder.hpp"
 #include "encoding/block-helpers.hpp"
-#include <ndn-cxx/lp/tags.hpp> // For HopLimitTag
+#include "tlv.hpp" // For tlv::ApplicationParameters
 
 #include <vector>
 
 namespace ndn {
 namespace optoflood {
+
+// Helper to build a Block with a non-negative integer payload
+template<typename T>
+static Block
+makeIntegerBlock(uint32_t type, T value)
+{
+    Block block(type);
+    size_t valueSize = ndn::encoding::sizeNonNegative(value);
+    block.prepare(valueSize);
+    ndn::encoding::writeNonNegative(block.value(), value, valueSize);
+    return block;
+}
 
 Block
 makeMobilityFlagBlock()
@@ -18,110 +30,117 @@ makeMobilityFlagBlock()
 Block
 makeFloodIdBlock(uint64_t floodId)
 {
-  Block block(tlv::optoflood::FloodId);
-  ndn::encoding::prependNonNegativeInteger(block, floodId);
-  return block;
+  return makeIntegerBlock(tlv::optoflood::FloodId, floodId);
 }
 
 Block
 makeNewFaceSeqBlock(uint32_t seq)
 {
-  Block block(tlv::optoflood::NewFaceSeq);
-  ndn::encoding::prependNonNegativeInteger(block, seq);
-  return block;
+  return makeIntegerBlock(tlv::optoflood::NewFaceSeq, seq);
 }
 
 Block
 makeTraceHintBlock(const std::vector<uint8_t>& hint)
 {
   Block block(tlv::optoflood::TraceHint);
-  block.assign(hint.begin(), hint.end());
+  if (!hint.empty()) {
+    block.assign(hint.data(), hint.size());
+  }
   return block;
+}
+
+// Visit MetaInfo to find a specific TLV type
+template<typename T, typename OnFound>
+static T
+visitMetaInfo(const MetaInfo& metaInfo, uint32_t type, OnFound onFound)
+{
+  T result = std::nullopt;
+  metaInfo.visit([&](const Block& block) {
+    if (block.type() == type) {
+      result = onFound(block);
+      return false; // Stop visiting
+    }
+    return true; // Continue visiting
+  });
+  return result;
 }
 
 bool
 hasMobilityFlag(const MetaInfo& metaInfo)
 {
-  return metaInfo.has(tlv::optoflood::MobilityFlag);
+  return visitMetaInfo<bool>(metaInfo, tlv::optoflood::MobilityFlag,
+                             [](const Block&) { return true; }).value_or(false);
 }
 
 std::optional<uint64_t>
 getFloodId(const MetaInfo& metaInfo)
 {
-  const auto& block = metaInfo.get(tlv::optoflood::FloodId);
-  if (block.empty()) {
-    return std::nullopt;
-  }
-  return readNonNegativeInteger(block);
+  return visitMetaInfo<std::optional<uint64_t>>(
+    metaInfo, tlv::optoflood::FloodId,
+    [](const Block& block) { return readNonNegativeInteger(block); });
 }
 
 std::optional<uint32_t>
 getNewFaceSeq(const MetaInfo& metaInfo)
 {
-  const auto& block = metaInfo.get(tlv::optoflood::NewFaceSeq);
-  if (block.empty()) {
-    return std::nullopt;
-  }
-  return static_cast<uint32_t>(readNonNegativeInteger(block));
+  return visitMetaInfo<std::optional<uint32_t>>(
+    metaInfo, tlv::optoflood::NewFaceSeq,
+    [](const Block& block) { return static_cast<uint32_t>(readNonNegativeInteger(block)); });
 }
 
 std::optional<std::vector<uint8_t>>
 getTraceHint(const MetaInfo& metaInfo)
 {
-  const auto& block = metaInfo.get(tlv::optoflood::TraceHint);
-  if (block.empty()) {
-    return std::nullopt;
-  }
-  return std::vector<uint8_t>(block.begin(), block.end());
+  return visitMetaInfo<std::optional<std::vector<uint8_t>>>(
+    metaInfo, tlv::optoflood::TraceHint,
+    [](const Block& block) { return std::vector<uint8_t>(block.value(), block.value_end()); });
 }
-
-// --- Interest Packet Helpers ---
 
 Block
 makeInterestFloodingParameters(const std::optional<std::vector<uint8_t>>& traceHint,
                                const std::optional<uint8_t>& hopLimit)
 {
-  Encoder encoder;
-  encoder.prependBlock(tlv::ApplicationParameters);
-  size_t appParamsLength = 0;
+  ndn::encoding::Encoder appParamsEncoder;
+  size_t appParamsSize = 0;
 
-  Block floodRequestBlock(tlv::optoflood::InterestFloodRequest);
-  Encoder floodRequestEncoder;
-  size_t floodRequestLength = 0;
+  ndn::encoding::Encoder floodRequestEncoder;
+  size_t floodRequestSize = 0;
+
+  if (hopLimit) {
+      Block hopLimitBlock(tlv::HopLimit);
+      hopLimitBlock.push_back(*hopLimit);
+      floodRequestEncoder.prependBlock(hopLimitBlock);
+      floodRequestSize += hopLimitBlock.wireEncode().size();
+  }
 
   if (traceHint) {
-    floodRequestEncoder.prependBlock(makeTraceHintBlock(*traceHint));
-    floodRequestLength += floodRequestEncoder.size();
-  }
-  if (hopLimit) {
-    Block hopLimitBlock(tlv::lp::HopLimit);
-    hopLimitBlock.push_back(*hopLimit);
-    floodRequestEncoder.prependBlock(hopLimitBlock);
-    floodRequestLength += floodRequestEncoder.size();
+      Block traceHintBlock = makeTraceHintBlock(*traceHint);
+      floodRequestEncoder.prependBlock(traceHintBlock);
+      floodRequestSize += traceHintBlock.wireEncode().size();
   }
 
-  floodRequestBlock.encodeHeader(floodRequestLength);
-  floodRequestBlock.insert(floodRequestBlock.end(),
-                           floodRequestEncoder.begin(), floodRequestEncoder.end());
+  appParamsEncoder.prependBlock(tlv::optoflood::InterestFloodRequest,
+                              floodRequestEncoder.begin(), floodRequestEncoder.end());
+  appParamsSize += appParamsEncoder.size();
 
-  encoder.prependBlock(floodRequestBlock);
-  appParamsLength += encoder.size();
-  
-  encoder.prependHeader(appParamsLength);
-
-  return encoder.getBlock();
+  return appParamsEncoder.prependBlock(tlv::ApplicationParameters);
 }
 
 bool
 isInterestFloodRequested(const Interest& interest)
 {
   const auto& appParams = interest.getApplicationParameters();
-  if (appParams.empty()) {
+  if (!appParams.hasWire()) {
     return false;
   }
   try {
     appParams.parse();
-    return appParams.has(tlv::optoflood::InterestFloodRequest);
+    for (const auto& item : appParams.elements()) {
+        if (item.type() == tlv::optoflood::InterestFloodRequest) {
+            return true;
+        }
+    }
+    return false;
   }
   catch (const tlv::Error&) {
     return false;
