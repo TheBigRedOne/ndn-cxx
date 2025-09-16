@@ -2,7 +2,7 @@
 #include "encoding/tlv-optoflood.hpp"
 #include "encoding/encoder.hpp"
 #include "encoding/block-helpers.hpp"
-#include "tlv.hpp" // For tlv::ApplicationParameters
+#include "encoding/tlv.hpp" // For tlv::ApplicationParameters
 
 #include <vector>
 
