@@ -73,21 +73,34 @@ makeInterestFloodingParameters(const std::optional<std::vector<uint8_t>>& traceH
     encoding::Encoder floodRequestEncoder;
 
     if (hopLimit) {
+        // Manually encode HopLimit TLV
         uint8_t val = *hopLimit;
-        encoding::prependBlock(floodRequestEncoder, makeBinaryBlock(tlv::HopLimit, &val, &val + 1));
+        floodRequestEncoder.prependVarNumber(1); // Length
+        floodRequestEncoder.prependRange(&val, &val + 1);
+        floodRequestEncoder.prependVarNumber(tlv::HopLimit); // Type
     }
 
     if (traceHint) {
-        encoding::prependBlock(floodRequestEncoder, makeTraceHintBlock(*traceHint));
+        // Manually encode TraceHint TLV
+        const auto& hintData = *traceHint;
+        floodRequestEncoder.prependVarNumber(hintData.size());
+        floodRequestEncoder.prependRange(hintData.begin(), hintData.end());
+        floodRequestEncoder.prependVarNumber(tlv::optoflood::TraceHint);
     }
     
-    Block floodRequestBlock = floodRequestEncoder.block();
-    floodRequestBlock.encode(); // Ensure wire format is generated
+    // Now wrap the encoded content in an InterestFloodRequest TLV
+    encoding::Encoder interestFloodEncoder;
+    interestFloodEncoder.prependVarNumber(floodRequestEncoder.size());
+    interestFloodEncoder.prependRange(floodRequestEncoder.begin(), floodRequestEncoder.end());
+    interestFloodEncoder.prependVarNumber(tlv::optoflood::InterestFloodRequest);
     
+    // Finally, wrap everything in ApplicationParameters TLV
     encoding::Encoder appParamsEncoder;
-    prependBlock(appParamsEncoder, makeNestedBlock(tlv::optoflood::InterestFloodRequest, floodRequestBlock));
-    
-    return makeNestedBlock(tlv::ApplicationParameters, appParamsEncoder.block());
+    appParamsEncoder.prependVarNumber(interestFloodEncoder.size());
+    appParamsEncoder.prependRange(interestFloodEncoder.begin(), interestFloodEncoder.end());
+    appParamsEncoder.prependVarNumber(tlv::ApplicationParameters);
+
+    return appParamsEncoder.block();
 }
 
 
@@ -99,6 +112,8 @@ isInterestFloodRequested(const Interest& interest)
     return false;
   }
   
+  // parse() must be called before find()
+  appParams.parse();
   return appParams.find(tlv::optoflood::InterestFloodRequest) != appParams.elements_end();
 }
 
