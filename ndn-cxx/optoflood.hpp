@@ -1,6 +1,6 @@
 #pragma once
 
-#include "block.hpp"
+#include "encoding/block.hpp"
 #include "meta-info.hpp"
 #include "interest.hpp"
 

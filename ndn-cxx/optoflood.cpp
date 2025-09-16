@@ -1,8 +1,7 @@
 #include "optoflood.hpp"
 #include "encoding/tlv-optoflood.hpp"
 #include "encoding/encoder.hpp"
-#include "encoding/buffer-stream.hpp"
-#include "util/non-negative-integer.hpp"
+#include "encoding/block-helpers.hpp"
 #include <ndn-cxx/lp/tags.hpp> // For HopLimitTag
 
 #include <vector>
@@ -19,13 +18,17 @@ makeMobilityFlagBlock()
 Block
 makeFloodIdBlock(uint64_t floodId)
 {
-  returndetail::makeNonNegativeIntegerBlock(tlv::optoflood::FloodId, floodId);
+  Block block(tlv::optoflood::FloodId);
+  ndn::encoding::prependNonNegativeInteger(block, floodId);
+  return block;
 }
 
 Block
 makeNewFaceSeqBlock(uint32_t seq)
 {
-  return detail::makeNonNegativeIntegerBlock(tlv::optoflood::NewFaceSeq, seq);
+  Block block(tlv::optoflood::NewFaceSeq);
+  ndn::encoding::prependNonNegativeInteger(block, seq);
+  return block;
 }
 
 Block
