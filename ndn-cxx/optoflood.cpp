@@ -117,5 +117,49 @@ isInterestFloodRequested(const Interest& interest)
   return appParams.find(tlv::optoflood::InterestFloodRequest) != appParams.elements_end();
 }
 
+std::optional<uint8_t>
+getFloodHopLimit(const Interest& interest)
+{
+  const auto& appParams = interest.getApplicationParameters();
+  if (appParams.elements_size() == 0) {
+    return std::nullopt;
+  }
+  appParams.parse();
+  auto it = appParams.find(tlv::optoflood::InterestFloodRequest);
+  if (it == appParams.elements_end()) {
+    return std::nullopt;
+  }
+  // Parse inner TLVs
+  it->parse();
+  auto hop = it->find(tlv::HopLimit);
+  if (hop != it->elements_end()) {
+    // HopLimit value is 1 byte
+    if (hop->value_size() == 1) {
+      return static_cast<uint8_t>(*hop->value_begin());
+    }
+  }
+  return std::nullopt;
+}
+
+std::optional<std::vector<uint8_t>>
+getFloodTraceHint(const Interest& interest)
+{
+  const auto& appParams = interest.getApplicationParameters();
+  if (appParams.elements_size() == 0) {
+    return std::nullopt;
+  }
+  appParams.parse();
+  auto it = appParams.find(tlv::optoflood::InterestFloodRequest);
+  if (it == appParams.elements_end()) {
+    return std::nullopt;
+  }
+  it->parse();
+  auto hint = it->find(tlv::optoflood::TraceHint);
+  if (hint != it->elements_end()) {
+    return std::vector<uint8_t>(hint->value_begin(), hint->value_end());
+  }
+  return std::nullopt;
+}
+
 } // namespace optoflood
 } // namespace ndn

@@ -77,6 +77,14 @@ using NonDiscoveryTag = SimpleTag<EmptyValue, 14>;
  */
 using PrefixAnnouncementTag = SimpleTag<PrefixAnnouncementHeader, 15>;
 
+/**
+ * \class OptoHopLimit
+ * \brief A packet tag for experimental OptoHopLimit LP field.
+ *
+ * This tag can be attached to Data. Value is uint64_t but recommended <=255.
+ */
+using OptoHopLimit = SimpleTag<uint64_t, 16>;
+
 } // namespace ndn::lp
 
 #endif // NDN_CXX_LP_TAGS_HPP

@@ -80,5 +80,17 @@ makeInterestFloodingParameters(const std::optional<std::vector<uint8_t>>& traceH
 bool
 isInterestFloodRequested(const Interest& interest);
 
+/**
+ * @brief Extracts requested HopLimit for flooding from ApplicationParameters, if present.
+ */
+std::optional<uint8_t>
+getFloodHopLimit(const Interest& interest);
+
+/**
+ * @brief Extracts TraceHint for flooding from ApplicationParameters, if present.
+ */
+std::optional<std::vector<uint8_t>>
+getFloodTraceHint(const Interest& interest);
+
 } // namespace optoflood
 } // namespace ndn

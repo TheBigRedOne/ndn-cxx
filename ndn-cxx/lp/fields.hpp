@@ -114,6 +114,14 @@ typedef FieldDecl<field_location_tags::Header,
                   PrefixAnnouncementHeader,
                   tlv::PrefixAnnouncement> PrefixAnnouncementField;
 
+// OptoFlood experimental: 1-byte HopLimit for Data flooding scope control
+typedef FieldDecl<field_location_tags::Header,
+                  uint64_t,
+                  tlv::OptoHopLimit,
+                  false,
+                  NonNegativeIntegerTag,
+                  NonNegativeIntegerTag> OptoHopLimitField;
+
 /**
  * \brief Set of all field declarations.
  */
@@ -131,7 +139,8 @@ using FieldSet = boost::mp11::mp_list<
   AckField,
   TxSequenceField,
   NonDiscoveryField,
-  PrefixAnnouncementField
+  PrefixAnnouncementField,
+  OptoHopLimitField
 >;
 static_assert(boost::mp11::mp_is_set<FieldSet>());
 

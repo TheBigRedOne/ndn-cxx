@@ -52,6 +52,9 @@ enum : uint32_t {
   NonDiscovery = 844,
   PrefixAnnouncement = 848,
 
+  // OptoFlood experimental field for Data flooding hop control (1-octet header field range)
+  OptoHopLimit = 96,
+
   /**
    * \brief Lower bound of 1-octet header field.
    */
