@@ -73,31 +73,31 @@ makeInterestFloodingParameters(const std::optional<std::vector<uint8_t>>& traceH
     encoding::Encoder floodRequestEncoder;
 
     if (hopLimit) {
-        // Manually encode HopLimit TLV
+        // HopLimit TLV: Value, Length, Type (prepend in reverse order)
         uint8_t val = *hopLimit;
-        floodRequestEncoder.prependVarNumber(1); // Length
         floodRequestEncoder.prependRange(&val, &val + 1);
-        floodRequestEncoder.prependVarNumber(tlv::HopLimit); // Type
+        floodRequestEncoder.prependVarNumber(1);
+        floodRequestEncoder.prependVarNumber(tlv::HopLimit);
     }
 
     if (traceHint) {
-        // Manually encode TraceHint TLV
+        // TraceHint TLV: Value, Length, Type
         const auto& hintData = *traceHint;
-        floodRequestEncoder.prependVarNumber(hintData.size());
         floodRequestEncoder.prependRange(hintData.begin(), hintData.end());
+        floodRequestEncoder.prependVarNumber(hintData.size());
         floodRequestEncoder.prependVarNumber(tlv::optoflood::TraceHint);
     }
     
     // Now wrap the encoded content in an InterestFloodRequest TLV
     encoding::Encoder interestFloodEncoder;
-    interestFloodEncoder.prependVarNumber(floodRequestEncoder.size());
     interestFloodEncoder.prependRange(floodRequestEncoder.begin(), floodRequestEncoder.end());
+    interestFloodEncoder.prependVarNumber(floodRequestEncoder.size());
     interestFloodEncoder.prependVarNumber(tlv::optoflood::InterestFloodRequest);
     
     // Finally, wrap everything in ApplicationParameters TLV
     encoding::Encoder appParamsEncoder;
-    appParamsEncoder.prependVarNumber(interestFloodEncoder.size());
     appParamsEncoder.prependRange(interestFloodEncoder.begin(), interestFloodEncoder.end());
+    appParamsEncoder.prependVarNumber(interestFloodEncoder.size());
     appParamsEncoder.prependVarNumber(tlv::ApplicationParameters);
 
     return appParamsEncoder.block();
