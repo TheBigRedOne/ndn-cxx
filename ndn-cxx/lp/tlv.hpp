@@ -54,6 +54,8 @@ enum : uint32_t {
 
   // OptoFlood experimental field for Data flooding hop control (1-octet header field range)
   OptoHopLimit = 96,
+  // OptoFlood experimental LP MobilityFlag (presence-only, hop-by-hop)
+  OptoMobilityFlag = 97,
 
   /**
    * \brief Lower bound of 1-octet header field.

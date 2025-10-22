@@ -122,6 +122,11 @@ typedef FieldDecl<field_location_tags::Header,
                   NonNegativeIntegerTag,
                   NonNegativeIntegerTag> OptoHopLimitField;
 
+// OptoFlood experimental: presence-only MobilityFlag for hop-by-hop control
+typedef FieldDecl<field_location_tags::Header,
+                  EmptyValue,
+                  tlv::OptoMobilityFlag> OptoMobilityFlagField;
+
 /**
  * \brief Set of all field declarations.
  */
@@ -140,7 +145,8 @@ using FieldSet = boost::mp11::mp_list<
   TxSequenceField,
   NonDiscoveryField,
   PrefixAnnouncementField,
-  OptoHopLimitField
+  OptoHopLimitField,
+  OptoMobilityFlagField
 >;
 static_assert(boost::mp11::mp_is_set<FieldSet>());
 

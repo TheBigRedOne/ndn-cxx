@@ -85,6 +85,14 @@ using PrefixAnnouncementTag = SimpleTag<PrefixAnnouncementHeader, 15>;
  */
 using OptoHopLimit = SimpleTag<uint64_t, 16>;
 
+/**
+ * \class OptoMobilityFlag
+ * \brief A packet tag for experimental LP MobilityFlag (presence-only).
+ *
+ * This tag can be attached to Data. EmptyValue indicates presence.
+ */
+using OptoMobilityFlag = SimpleTag<EmptyValue, 17>;
+
 } // namespace ndn::lp
 
 #endif // NDN_CXX_LP_TAGS_HPP
