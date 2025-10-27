@@ -58,21 +58,14 @@ getNewFaceSeq(const MetaInfo& metaInfo)
 Block
 makeInterestFloodingParameters(const std::optional<uint8_t>& hopLimit)
 {
-  // Build inner fields using safe Block constructors
+  // Build InterestFloodRequest as a standalone TLV block; caller sets it as ApplicationParameters value
   Block floodReq(tlv::optoflood::InterestFloodRequest);
-
   if (hopLimit) {
-    // HopLimit as NonNegativeInteger encodes to 1 byte for small values
     Block hop = makeNonNegativeIntegerBlock(tlv::HopLimit, static_cast<uint64_t>(*hopLimit));
     floodReq.push_back(hop);
   }
-
   floodReq.encode();
-
-  Block appParams(tlv::ApplicationParameters);
-  appParams.push_back(floodReq);
-  appParams.encode();
-  return appParams;
+  return floodReq;
 }
 
 
@@ -80,35 +73,30 @@ bool
 isInterestFloodRequested(const Interest& interest)
 {
   const auto& appParams = interest.getApplicationParameters();
-  if (appParams.elements_size() == 0) {
+  if (appParams.value_size() == 0) {
     return false;
   }
-  
-  // parse() must be called before find()
-  appParams.parse();
-  return appParams.find(tlv::optoflood::InterestFloodRequest) != appParams.elements_end();
+  // ApplicationParameters carries a single InterestFloodRequest block as its value
+  Block v(appParams.value(), appParams.value_size());
+  v.parse();
+  return v.type() == tlv::optoflood::InterestFloodRequest;
 }
 
 std::optional<uint8_t>
 getFloodHopLimit(const Interest& interest)
 {
   const auto& appParams = interest.getApplicationParameters();
-  if (appParams.elements_size() == 0) {
+  if (appParams.value_size() == 0) {
     return std::nullopt;
   }
-  appParams.parse();
-  auto it = appParams.find(tlv::optoflood::InterestFloodRequest);
-  if (it == appParams.elements_end()) {
+  Block v(appParams.value(), appParams.value_size());
+  v.parse();
+  if (v.type() != tlv::optoflood::InterestFloodRequest) {
     return std::nullopt;
   }
-  // Parse inner TLVs
-  it->parse();
-  auto hop = it->find(tlv::HopLimit);
-  if (hop != it->elements_end()) {
-    // HopLimit value is 1 byte
-    if (hop->value_size() == 1) {
-      return static_cast<uint8_t>(*hop->value_begin());
-    }
+  auto hop = v.find(tlv::HopLimit);
+  if (hop != v.elements_end()) {
+    return static_cast<uint8_t>(readNonNegativeInteger(*hop));
   }
   return std::nullopt;
 }
