@@ -27,11 +27,7 @@ makeNewFaceSeqBlock(uint32_t seq)
   return makeNonNegativeIntegerBlock(tlv::optoflood::NewFaceSeq, seq);
 }
 
-Block
-makeTraceHintBlock(const std::vector<uint8_t>& hint)
-{
-  return makeBinaryBlock(tlv::optoflood::TraceHint, hint.begin(), hint.end());
-}
+// TraceHint removed in current implementation
 
 bool
 hasMobilityFlag(const MetaInfo& metaInfo)
@@ -57,50 +53,26 @@ getNewFaceSeq(const MetaInfo& metaInfo)
   return std::nullopt;
 }
 
-std::optional<std::vector<uint8_t>>
-getTraceHint(const MetaInfo& metaInfo)
-{
-  if (const auto* block = metaInfo.findAppMetaInfo(tlv::optoflood::TraceHint)) {
-    return std::vector<uint8_t>(block->value_begin(), block->value_end());
-  }
-  return std::nullopt;
-}
+// TraceHint removed in current implementation
 
 Block
-makeInterestFloodingParameters(const std::optional<std::vector<uint8_t>>& traceHint,
-                               const std::optional<uint8_t>& hopLimit)
+makeInterestFloodingParameters(const std::optional<uint8_t>& hopLimit)
 {
-    encoding::Encoder floodRequestEncoder;
+  // Build inner fields using safe Block constructors
+  Block floodReq(tlv::optoflood::InterestFloodRequest);
 
-    if (hopLimit) {
-        // HopLimit TLV: Value, Length, Type (prepend in reverse order)
-        uint8_t val = *hopLimit;
-        floodRequestEncoder.prependRange(&val, &val + 1);
-        floodRequestEncoder.prependVarNumber(1);
-        floodRequestEncoder.prependVarNumber(tlv::HopLimit);
-    }
+  if (hopLimit) {
+    // HopLimit as NonNegativeInteger encodes to 1 byte for small values
+    Block hop = makeNonNegativeIntegerBlock(tlv::HopLimit, static_cast<uint64_t>(*hopLimit));
+    floodReq.push_back(hop);
+  }
 
-    if (traceHint) {
-        // TraceHint TLV: Value, Length, Type
-        const auto& hintData = *traceHint;
-        floodRequestEncoder.prependRange(hintData.begin(), hintData.end());
-        floodRequestEncoder.prependVarNumber(hintData.size());
-        floodRequestEncoder.prependVarNumber(tlv::optoflood::TraceHint);
-    }
-    
-    // Now wrap the encoded content in an InterestFloodRequest TLV
-    encoding::Encoder interestFloodEncoder;
-    interestFloodEncoder.prependRange(floodRequestEncoder.begin(), floodRequestEncoder.end());
-    interestFloodEncoder.prependVarNumber(floodRequestEncoder.size());
-    interestFloodEncoder.prependVarNumber(tlv::optoflood::InterestFloodRequest);
-    
-    // Finally, wrap everything in ApplicationParameters TLV
-    encoding::Encoder appParamsEncoder;
-    appParamsEncoder.prependRange(interestFloodEncoder.begin(), interestFloodEncoder.end());
-    appParamsEncoder.prependVarNumber(interestFloodEncoder.size());
-    appParamsEncoder.prependVarNumber(tlv::ApplicationParameters);
+  floodReq.encode();
 
-    return appParamsEncoder.block();
+  Block appParams(tlv::ApplicationParameters);
+  appParams.push_back(floodReq);
+  appParams.encode();
+  return appParams;
 }
 
 
