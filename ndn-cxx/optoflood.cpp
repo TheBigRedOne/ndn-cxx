@@ -77,7 +77,7 @@ isInterestFloodRequested(const Interest& interest)
     return false;
   }
   // ApplicationParameters carries a single InterestFloodRequest block as its value
-  Block v(appParams.value(), appParams.value_size());
+  Block v(appParams.value_bytes());
   v.parse();
   return v.type() == tlv::optoflood::InterestFloodRequest;
 }
@@ -89,7 +89,7 @@ getFloodHopLimit(const Interest& interest)
   if (appParams.value_size() == 0) {
     return std::nullopt;
   }
-  Block v(appParams.value(), appParams.value_size());
+  Block v(appParams.value_bytes());
   v.parse();
   if (v.type() != tlv::optoflood::InterestFloodRequest) {
     return std::nullopt;
