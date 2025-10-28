@@ -58,14 +58,19 @@ getNewFaceSeq(const MetaInfo& metaInfo)
 Block
 makeInterestFloodingParameters(const std::optional<uint8_t>& hopLimit)
 {
-  // Build InterestFloodRequest as a standalone TLV block; caller sets it as ApplicationParameters value
+  // Inner: InterestFloodRequest TLV
   Block floodReq(tlv::optoflood::InterestFloodRequest);
   if (hopLimit) {
     Block hop = makeNonNegativeIntegerBlock(tlv::HopLimit, static_cast<uint64_t>(*hopLimit));
     floodReq.push_back(hop);
   }
   floodReq.encode();
-  return floodReq;
+
+  // Outer: ApplicationParameters TLV carrying floodReq as value
+  Block appParams(tlv::ApplicationParameters);
+  appParams.push_back(floodReq);
+  appParams.encode();
+  return appParams;
 }
 
 
