@@ -3,11 +3,14 @@
 #include "encoding/encoder.hpp"
 #include "encoding/block-helpers.hpp"
 #include "encoding/tlv.hpp"
+#include "util/logger.hpp"
 
 #include <vector>
 
 namespace ndn {
 namespace optoflood {
+
+NDN_LOG_INIT(ndn.optoflood);
 
 Block
 makeMobilityFlagBlock()
@@ -76,10 +79,22 @@ isInterestFloodRequested(const Interest& interest)
   if (appParams.value_size() == 0) {
     return false;
   }
-  // ApplicationParameters carries a single InterestFloodRequest block as its value
   Block v(appParams.value_bytes());
-  v.parse();
-  return v.type() == tlv::optoflood::InterestFloodRequest;
+  try {
+    v.parse();
+  }
+  catch (const tlv::Error& e) {
+    NDN_LOG_WARN("Interest " << interest.getName()
+                  << " carries malformed ApplicationParameters (" << e.what() << ')');
+    return false;
+  }
+  if (v.type() != tlv::optoflood::InterestFloodRequest) {
+    NDN_LOG_DEBUG("Interest " << interest.getName()
+                  << " ApplicationParameters type=" << v.type()
+                  << " (expect tlv::optoflood::InterestFloodRequest)");
+    return false;
+  }
+  return true;
 }
 
 std::optional<uint8_t>
@@ -90,8 +105,18 @@ getFloodHopLimit(const Interest& interest)
     return std::nullopt;
   }
   Block v(appParams.value_bytes());
-  v.parse();
+  try {
+    v.parse();
+  }
+  catch (const tlv::Error& e) {
+    NDN_LOG_WARN("Interest " << interest.getName()
+                  << " carries malformed InterestFloodRequest (" << e.what() << ')');
+    return std::nullopt;
+  }
   if (v.type() != tlv::optoflood::InterestFloodRequest) {
+    NDN_LOG_DEBUG("Interest " << interest.getName()
+                  << " ApplicationParameters type=" << v.type()
+                  << " (expect tlv::optoflood::InterestFloodRequest)");
     return std::nullopt;
   }
   auto hop = v.find(tlv::HopLimit);
