@@ -2,10 +2,7 @@
 
 #include "encoding/block.hpp"
 #include "meta-info.hpp"
-#include "interest.hpp"
-
 #include <optional>
-#include <vector>
 
 namespace ndn {
 namespace optoflood {
@@ -49,29 +46,6 @@ getFloodId(const MetaInfo& metaInfo);
  */
 std::optional<uint32_t>
 getNewFaceSeq(const MetaInfo& metaInfo);
-
-/**
- * @brief Creates a Block containing ApplicationParameters for Interest flooding.
- *
- * @param traceHint An optional byte vector for the TraceHint.
- * @param hopLimit An optional hop limit for the flood.
- * @return A Block containing the encoded ApplicationParameters.
- */
-Block
-makeInterestFloodingParameters(const std::optional<uint8_t>& hopLimit);
-
-/**
- * @brief Checks if an Interest's ApplicationParameters contain a flood request.
- */
-bool
-isInterestFloodRequested(const Interest& interest);
-
-/**
- * @brief Extracts requested HopLimit for flooding from ApplicationParameters, if present.
- */
-std::optional<uint8_t>
-getFloodHopLimit(const Interest& interest);
-
 
 } // namespace optoflood
 } // namespace ndn
