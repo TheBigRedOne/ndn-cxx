@@ -3,12 +3,9 @@
 #include "encoding/encoder.hpp"
 #include "encoding/block-helpers.hpp"
 #include "encoding/tlv.hpp"
-#include "util/logger.hpp"
 
 namespace ndn {
 namespace optoflood {
-
-NDN_LOG_INIT(ndn.optoflood);
 
 Block
 makeMobilityFlagBlock()
