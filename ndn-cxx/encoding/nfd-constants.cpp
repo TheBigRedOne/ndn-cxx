@@ -162,8 +162,6 @@ operator<<(std::ostream& os, RouteOrigin routeOrigin)
       return os << "nlsr";
     case ROUTE_ORIGIN_PREFIXANN:
       return os << "prefixann";
-    case ROUTE_ORIGIN_OPTOFLOOD:
-      return os << "optoflood";
     case ROUTE_ORIGIN_STATIC:
       return os << "static";
   }
