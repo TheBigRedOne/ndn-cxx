@@ -93,6 +93,16 @@ using OptoHopLimit = SimpleTag<uint64_t, 16>;
  */
 using OptoMobilityFlag = SimpleTag<EmptyValue, 17>;
 
+/**
+ * \class OptoMobilityEpoch
+ * \brief A packet tag for the experimental OptoMobilityEpoch LP field.
+ *
+ * This tag can be attached to Data. It carries the mobility epoch (NewFaceSeq)
+ * that NFD stamps on NFD-marked business Data so downstream nodes order TFIB
+ * entries by epoch (newer epoch wins).
+ */
+using OptoMobilityEpoch = SimpleTag<uint64_t, 18>;
+
 } // namespace ndn::lp
 
 #endif // NDN_CXX_LP_TAGS_HPP

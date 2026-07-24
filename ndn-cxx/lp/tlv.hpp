@@ -56,6 +56,10 @@ enum : uint32_t {
   OptoHopLimit = 96,
   // OptoFlood experimental LP MobilityFlag (presence-only, hop-by-hop)
   OptoMobilityFlag = 97,
+  // OptoFlood experimental LP MobilityEpoch (hop-by-hop, NFD-stamped): carries the
+  // mobility epoch on NFD-marked business Data for TFIB ordering. Uses free 1-octet
+  // header value 95 (96/97 are OptoHopLimit/OptoMobilityFlag; 98 is PitToken).
+  OptoMobilityEpoch = 95,
 
   /**
    * \brief Lower bound of 1-octet header field.

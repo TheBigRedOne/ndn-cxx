@@ -127,6 +127,15 @@ typedef FieldDecl<field_location_tags::Header,
                   EmptyValue,
                   tlv::OptoMobilityFlag> OptoMobilityFlagField;
 
+// OptoFlood experimental: MobilityEpoch (NewFaceSeq) carried hop-by-hop on
+// NFD-marked business Data, used for TFIB ordering (newer epoch wins).
+typedef FieldDecl<field_location_tags::Header,
+                  uint64_t,
+                  tlv::OptoMobilityEpoch,
+                  false,
+                  NonNegativeIntegerTag,
+                  NonNegativeIntegerTag> OptoMobilityEpochField;
+
 /**
  * \brief Set of all field declarations.
  */
@@ -146,7 +155,8 @@ using FieldSet = boost::mp11::mp_list<
   NonDiscoveryField,
   PrefixAnnouncementField,
   OptoHopLimitField,
-  OptoMobilityFlagField
+  OptoMobilityFlagField,
+  OptoMobilityEpochField
 >;
 static_assert(boost::mp11::mp_is_set<FieldSet>());
 
